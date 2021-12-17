@@ -45,10 +45,28 @@ class Packet:
         self.packets=[]
         self.version=None
         self.type=None
-        self.length=None
+        self.length=0
         self.literal=None
         self.wantedsubpackets=None
         self.wantedcodelength=None
+        self.parent=None
+
+    def isFull(self):
+        packet=self
+        if (packet.wantedsubpackets!=None and len(packet.packets)<packet.wantedsubpackets):
+            print("Wanted number of subpackets:{} is {} packet:{}".format(packet.wantedsubpackets,len(packet.packets),packet))
+            return False
+        subpacketcodelength = packet.codelength()-packet.length
+        if (packet.wantedcodelength!=None and subpacketcodelength<packet.wantedcodelength):
+            print("Wanted subpacketcodelength:{} is {} packet:{}".format(packet.wantedcodelength,subpacketcodelength,packet))
+            return False
+        return True
+
+    def addPacket(self,packet):
+        self.packets.append(packet)
+        if self.type!=None and self.type in [5,6,7] and len(self.packets)>2:
+            print("Too many in packet something wrong with parsing..")
+
 
     def doOperator(self):
         if (self.type==4):
@@ -65,25 +83,29 @@ class Packet:
         if self.type==3:
             return max(map(lambda p:p.doOperator(),self.packets))
         if self.type==5:
-            p1=self.packets[0].doOperator()
-            p2=self.packets[1].doOperator()
+            p1, p2 = self.getTheTwoSubpackets()
             gt = p1>p2
             if gt: return 1
             return 0
         if self.type==6:
-            p1=self.packets[0].doOperator()
-            p2=self.packets[1].doOperator()
+            p1, p2 = self.getTheTwoSubpackets()
             lt = p1<p2
             if lt: return 1
             return 0
         if self.type==7:
-            p1=self.packets[0].doOperator()
-            p2=self.packets[1].doOperator()
+            p1, p2 = self.getTheTwoSubpackets()
             eq = p1==p2
             if eq: return 1
             return 0
         else:
             print("Wrong operator:{} packet:{}".format(self.type,packet))
+
+    def getTheTwoSubpackets(self):
+        p1=self.packets[0].doOperator()
+        p2=self.packets[1].doOperator()
+        if (len(self.packets)!=2):
+            print("Wrong number of packets!")
+        return p1,p2
 
     def __str__(self) -> str:
         if self.literal!=None:
@@ -105,6 +127,9 @@ def parsePacket(packetcode,parentpacket):
     global versionadd
     global heap
     reader=0
+    while parentpacket.isFull() and parentpacket.parent!=None:
+        print("Switched parent to its parent")
+        parentpacket=parentpacket.parent
     print("Len:{} code:{} parent:{}".format(len(packetcode),packetcode,parentpacket))
     if re.search("1",packetcode)==None:
         print("Found end!!")
@@ -113,13 +138,14 @@ def parsePacket(packetcode,parentpacket):
     packet=Packet()
     packet.version=decodeToInt(packetcode[reader:reader+3])
     packet.type=decodeToInt(packetcode[reader+3:reader+6])
-    parentpacket.packets.append(packet)
+    packet.parent=parentpacket
+    parentpacket.addPacket(packet)
     reader+=6
     print("version:{} type:{}".format(packet.version,packet.type))
     versionadd+=packet.version
     if (packet.type==4):
         (readeradd,literal)=getLiteral(packetcode[reader:])
-        print("literal:{} newreaderpos:{}".format(literal,readeradd))
+        #print("literal:{} newreaderpos:{}".format(literal,readeradd))
         reader+=readeradd
         packet.literal=literal
         packet.length=reader
@@ -138,19 +164,8 @@ def parsePacket(packetcode,parentpacket):
             packet.wantedsubpackets=subpacketlength
 
         packet.length=reader    
-        restofcode = packetcode[reader:]
-        if (packet.wantedsubpackets!=None and len(packet.packets)<packet.wantedsubpackets):
-            print("Wanted number of subpackets:{} is {} packet:{}".format(packet.wantedsubpackets,len(packet.packets),packet))
-            return parsePacket(packetcode[reader:],packet)
-        subpacketcodelength = packet.codelength()-packet.length
-        if (packet.wantedcodelength!=None and subpacketcodelength<packet.wantedcodelength):
-            print("Wanted subpacketcodelength:{} is {} packet:{}".format(packet.wantedcodelength,subpacketcodelength,packet))
-            return parsePacket(packetcode[reader:],packet)
-        if re.search("1",restofcode)!=None:
-            print("Got to restofcode code is:{}".format(restofcode))
-            return parsePacket(restofcode,parentpacket)
-        else:
-            return (reader,parentpacket)
+        return parsePacket(packetcode[reader:],packet)
+
 def getLiteral(subpacket):
     groups=[]
     foundend=False
@@ -193,7 +208,7 @@ D8005AC2A8F0 produces 1, because 5 is less than 15.
 F600BC2D8F produces 0, because 5 is not greater than 15.
 9C005AC2F8F0 produces 0, because 5 is not equal to 15.
 9C0141080250320F1802104A08 produces 1, because 1 + 3 = 2 * 2.'''
-for line in lines.split("\n")[7:8]:
+for line in lines.split("\n")[0:8]:
     s=line.split(" ")
     hex=s[0]
     print(hex)
@@ -201,5 +216,5 @@ for line in lines.split("\n")[7:8]:
     t=parsePacket(toBinary([hex]),parent)
     
     parent = parent.packets[0]
-    print(parent)
+   # print(parent)
     print("{}={}".format(hex,(parent.doOperator())))
