@@ -25,7 +25,7 @@ class SnailfishPair:
             magnitude+=2*self.y.magnitude()
         return magnitude
 
-    def lowest(self):
+    def lowestIndexInPair(self):
         return min(filter(lambda k:k!=None,[self.indexx,self.indexy]))
 
     def __init__(self,x,y) -> None:
@@ -34,7 +34,7 @@ class SnailfishPair:
         self.indexx=None
         self.indexy=None
         
-    def isRegularNumbers(self):
+    def isOnlyRegularNumbers(self):
         return type(self.x)==int and type(self.y)==int
 
     def countParent(self):
@@ -66,16 +66,16 @@ class SnailfishPair:
             print("Could not find me..")
     
     def split(self):
-        if type(self.x)==int and self.x>9:
-            x=math.floor(self.x/2)
-            y=math.ceil(self.x/2)
-            self.x=SnailfishPair(x,y)
-            self.x.parent=self
-        else:
-            x=math.floor(self.y/2)
-            y=math.ceil(self.y/2)
-            self.y=SnailfishPair(x,y)
-            self.y.parent=self
+        toBesplit="x"
+        if (type(self.x)!=int or self.x<=9):
+            toBesplit="y"
+        new_var = getattr(self,toBesplit)
+        x=math.floor(new_var/2)
+        y=math.ceil(new_var/2)
+        splittedPair = SnailfishPair(x,y)
+        splittedPair.parent=self
+        setattr(self,toBesplit,splittedPair)
+        
 
     def __str__(self) -> str:
         return "[{},{}]".format(self.x,self.y)
@@ -136,8 +136,8 @@ def iterateReduce(snailfish):
 
 def reducePair(allpairs:list[SnailfishPair]):
 
-    toexplodelist=list(filter(lambda p:p.isRegularNumbers()==True and p.countParent()==4,allpairs))
-    toexplodelist.sort(key= lambda p: p.lowest())
+    toexplodelist=list(filter(lambda p:p.isOnlyRegularNumbers()==True and p.countParent()==4,allpairs))
+    toexplodelist.sort(key= lambda p: p.lowestIndexInPair())
     #print(list(map(lambda p:"x:{} y:{} p.countParent():{} lowest:{}".format(p.x,p.y,p.countParent(),p.lowest()),toexplodelist)))
     changed=False
     if len(toexplodelist)>0: 
@@ -149,7 +149,7 @@ def reducePair(allpairs:list[SnailfishPair]):
         #print("after explode:\t{}".format(snailfish))
     else:
         tosplitlist=list(filter(lambda p:p.indexx!=None and p.x>=10 or p.indexy!=None and p.y>=10,allpairs))
-        tosplitlist.sort(key= lambda p: p.lowest())
+        tosplitlist.sort(key= lambda p: p.lowestIndexInPair())
         #print(list(map(lambda p:"split x:{} y:{} p.countParent():{} lowest:{}".format(p.x,p.y,p.countParent(),p.lowest()),tosplitlist)))
         if len(tosplitlist)>0 and changed==0: 
             tosplit=tosplitlist[0]
