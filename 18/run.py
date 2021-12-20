@@ -87,6 +87,22 @@ def readfile():
     print("The magnitude is:{}".format(acc.magnitude()))
     getHighestSum(lines)
 
+def toSnailfishPair(line) -> SnailfishPair: 
+    jsonarrs=json.loads(line.strip())
+    return toSnailfish(jsonarrs)
+
+def toSnailfish(arr) -> SnailfishPair:
+    [x,y]=arr
+    if type(x)==int and type(y)==int:
+        return SnailfishPair(x,y)
+    else:
+        if type(x)==int and type(y)!=int:
+            return SnailfishPair(x,toSnailfish(y))
+        if type(x)!=int and type(y)==int:
+            return SnailfishPair(toSnailfish(x),y)
+        if type(x)!=int and type(y)!=int:
+            return SnailfishPair(toSnailfish(x),toSnailfish(y))
+
 def sumLines(lines):
     acc=""
     for line in lines:
@@ -113,13 +129,12 @@ def iterateReduce(snailfish):
     allpairs=[]
     iterateSnailfish(snailfish,allpairs)
         
-    while reducePair(snailfish,allpairs)>0:
-        snailfish=toSnailfishPair(str(snailfish))
+    while reducePair(allpairs)>0:
         allpairs=[]
         iterateSnailfish(snailfish,allpairs)
     return snailfish
 
-def reducePair(snailfish:SnailfishPair,allpairs:list[SnailfishPair]):
+def reducePair(allpairs:list[SnailfishPair]):
 
     toexplodelist=list(filter(lambda p:p.isRegularNumbers()==True and p.countParent()==4,allpairs))
     toexplodelist.sort(key= lambda p: p.lowest())
@@ -155,6 +170,10 @@ def iterateSnailfish(snailfish,allpairs):
     for s in arr: 
         if type(s)!=int:
             s.parent=snailfish
+            if (count==0):
+                snailfish.indexx=None
+            else:
+                snailfish.indexy=None
             iterateSnailfish(s,allpairs)
         else:
             numindex+=1
@@ -166,26 +185,6 @@ def iterateSnailfish(snailfish,allpairs):
 
 
 
-
-def toSnailfishPair(line) -> SnailfishPair: 
-    jsonarrs=json.loads(line.strip())
-    return toSnailfish(jsonarrs)
-index=0    
-def toSnailfish(arr) -> SnailfishPair:
-    global index
-    index+=1
-    [x,y]=arr
-    if type(x)==int and type(y)==int:
-        return SnailfishPair(x,y)
-    else:
-        if type(x)==int and type(y)!=int:
-            return SnailfishPair(x,toSnailfish(y))
-        if type(x)!=int and type(y)==int:
-            return SnailfishPair(toSnailfish(x),y)
-        if type(x)!=int and type(y)!=int:
-            return SnailfishPair(toSnailfish(x),toSnailfish(y))
-
-#readfile()
 def test():
     doreduceTest("[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]","[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]")
     doreduceTest("[[6,[5,[4,[3,2]]]],1]","[[6,[5,[7,0]]],3]")
@@ -199,7 +198,7 @@ def doreduceTest(jsonstr,wanted):
     sp=toSnailfishPair(jsonstr)
     allpairs=[]
     iterateSnailfish(sp,allpairs)
-    reducePair(sp,allpairs)
+    reducePair(allpairs)
     print("{} reduced to:{}".format(jsonstr,sp))
     assert str(sp) == wanted
 
@@ -211,33 +210,7 @@ def iterateReduceTest(jsonstr,wanted=None):
     if (wanted!=None):
         assert str(sp) == wanted
     return sp
-#iterateReduceTest("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]")
-test()
-lines='''[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]
-[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]
-[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]
-[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]
-[7,[5,[[3,8],[1,4]]]]
-[[2,[2,2]],[8,[8,1]]]
-[2,9]
-[1,[[[9,3],9],[[9,0],[0,7]]]]
-[[[5,[7,4]],7],1]
-[[[[4,2],2],6],[8,7]]'''.splitlines()
-lines2='''[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
-[[[5,[2,8]],4],[5,[[9,9],0]]]
-[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]
-[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]
-[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]
-[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]
-[[[[5,4],[7,7]],8],[[8,3],8]]
-[[9,3],[[9,9],[6,[4,9]]]]
-[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]
-[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]'''.splitlines()
 
-#accfish=sumLines(lines2)
-#print(accfish.magnitude())
-#print(str(accfish))
-#sp1=iterateReduceTest("[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]")
-#sp2=iterateReduceTest("[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]")
-#spacc=iterateReduceTest("["+str(sp1)+","+str(sp2)+"]")
+test()
+
 readfile()
