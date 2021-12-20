@@ -5,11 +5,10 @@ from dataclasses import dataclass
 from typing import Union
 import json
 import math
-import uuid
 @dataclass
 class SnailfishPair:
-    x: any
-    y: any
+    x:any
+    y:any
     
     parent:any = None
 
@@ -124,7 +123,7 @@ def reducePair(snailfish:SnailfishPair,allpairs:list[SnailfishPair]):
 
     toexplodelist=list(filter(lambda p:p.isRegularNumbers()==True and p.countParent()==4,allpairs))
     toexplodelist.sort(key= lambda p: p.lowest())
-    #print(list(map(lambda p:"x:{} y:{} p.countParent():{} id:{} lowest:{}".format(p.x,p.y,p.countParent(),p.index,p.lowest()),toexplodelist)))
+    #print(list(map(lambda p:"x:{} y:{} p.countParent():{} lowest:{}".format(p.x,p.y,p.countParent(),p.lowest()),toexplodelist)))
     changed=False
     if len(toexplodelist)>0: 
         toexplode:SnailfishPair=toexplodelist[0]
@@ -136,7 +135,7 @@ def reducePair(snailfish:SnailfishPair,allpairs:list[SnailfishPair]):
     else:
         tosplitlist=list(filter(lambda p:p.indexx!=None and p.x>=10 or p.indexy!=None and p.y>=10,allpairs))
         tosplitlist.sort(key= lambda p: p.lowest())
-        #print(list(map(lambda p:"split x:{} y:{} p.countParent():{} id:{} lowest:{}".format(p.x,p.y,p.countParent(),p.index,p.lowest()),tosplitlist)))
+        #print(list(map(lambda p:"split x:{} y:{} p.countParent():{} lowest:{}".format(p.x,p.y,p.countParent(),p.lowest()),tosplitlist)))
         if len(tosplitlist)>0 and changed==0: 
             tosplit=tosplitlist[0]
             tosplit.split()
