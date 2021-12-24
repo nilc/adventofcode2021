@@ -161,7 +161,6 @@ def reducePair(allpairs:list[SnailfishPair]):
 numindex=0
 def iterateSnailfish(snailfish,allpairs):
     global numindex
-    #snailfish.index=len(allpairs)
     allpairs.append(snailfish)
     x=snailfish.x
     y=snailfish.y
